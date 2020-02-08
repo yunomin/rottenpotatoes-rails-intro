@@ -12,25 +12,46 @@ class MoviesController < ApplicationController
 
   def index
     @movies = Movie.all
-    
-# part one sorting
-    if params[:order_by].present?
-      session[:order_by] = params[:order_by]
+    @order_by = params[:order_by]
+    @movies = @movies.order(@order_by)
+
+    @all_ratings = Movie.distinct.pluck(:rating).sort
+    @selected_ratings = @all_ratings
+
+# part two ratings
+    if params[:ratings].present?
+      session[:ratings] = params[:ratings]
+      @selected_ratings = params[:ratings].keys
+      @movies = Movie.where(rating: @selected_ratings)
+    else
+      if session[:ratings].present?
+        params[:ratings] = session[:ratings]
+        flash.keep
+        redirect_to(movies_path(params)) && return
+      else
+        session[:ratins] = @all_ratings
+      end
     end
 
-    if params[:order_by] == "release_date"
-      @movies = @movies.order("release_date")
-    elsif params[:order_by] == "title"
-      @movies = @movies.order("title")
-    elsif !params[:order_by].present?
+# part one sorting
+    
+    
+
+    if params[:order_by].present?
+      session[:order_by] = params[:order_by]
+      @order_by = params[:order_by]
+      @movies = @movies.order(@order_by)
+    else
       if session[:order_by].present?
         #take order from last action and save
         params[:order_by] = session[:order_by]
         #flash saves the action
         flash.keep
-        redirect_to(movie_path(params)) && return
+        redirect_to(movies_path(params)) && return
       end
     end
+    
+
   end
 
   def new
